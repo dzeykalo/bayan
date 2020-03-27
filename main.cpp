@@ -14,6 +14,7 @@
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace fn = boost::fusion;
+namespace bm = boost::bimaps;
 
 std::string GetCrc32(const std::string& block) {
   boost::crc_32_type crc_32;
@@ -39,15 +40,31 @@ std::string GetHash(const std::string& block, bool hash_default) {
   else
     return GetSha1(block);
 }
+void read_file(std::string fname, size_t &pos, boost::bimap<std::string, bm::multiset_of<std::string>> &buffer_hash, size_t &block_size, bool hash_default)
+{
+  fs::ifstream file;
+  file.open(fname, std::ios::binary);
+  if (!file.is_open())
+    throw "error open " + fname;
+
+  file.seekg(pos);
+  std::string buf;
+  buf.resize(block_size, '\0');
+  !file.read(&buf[0], block_size);
+  buffer_hash.insert({fname, GetHash(buf, hash_default)});
+  
+  file.close();
+}
 
 int main(int argc, const char* argv[])
 {
   po::options_description desc("options");
   po::variables_map vm;
   fs::path input_path;
+  const size_t max_block_size = 100;
   size_t block_size;
   bool hash_default = true;
-  boost::bimap<std::string, boost::bimaps::multiset_of<size_t>> in_files;
+  boost::bimap<std::string, boost::bimaps::multiset_of<size_t>> files;
 
   desc.add_options()
           ("help,h", "show help")
@@ -61,7 +78,7 @@ int main(int argc, const char* argv[])
     po::notify(vm);
 
     if (vm.count("block-size")){
-      if (block_size < 1 || block_size > 100){
+      if (block_size < 1 || block_size > max_block_size){
         std::cout << "invalid block size: " <<  block_size << " set default (5) " << std::endl;
         block_size = 5;
       }
@@ -80,13 +97,21 @@ int main(int argc, const char* argv[])
       
       for(auto &it : input_files)
       {
-        in_files.insert({it, fs::file_size(it)});
+        if (fs::is_regular_file(it))
+          files.insert({it, fs::file_size(it)});
+        else if (fs::is_directory(it))
+        {
+          for (auto &x : fs::directory_iterator(it))
+            std::cout << x.path() << std::endl;
+        }
       }
-      for (auto &it : in_files){
-        if (in_files.right.count(it.right) < 2)
-          in_files.erase(it);
+      // return EXIT_SUCCESS;
+
+      for (auto &it : files){
+        if (files.right.count(it.right) < 2)
+          files.erase(it);
       }
-      if (in_files.size() < 2){
+      if (files.size() < 2){
         std::cout << "no duplicates due to size " << std::endl;
         return EXIT_SUCCESS;
       }
@@ -96,48 +121,40 @@ int main(int argc, const char* argv[])
       // fs::path p(s);
     }
 
-    bool check = true;
+    bool check = false;
     size_t pos = 0;
 
-    while (check)
-    {
-      boost::bimap<std::string, boost::bimaps::multiset_of<std::string>> buffer_hash;
-      for (auto &it : in_files){
-        
-        fs::ifstream file;
-        file.open(it.left, std::ios::binary);
-        if (!file.is_open()){
-          std::cout << "error open "<< it.left << std::endl;
-          return EXIT_FAILURE;
+    do {
+      check = false;
+      boost::bimap<std::string, bm::multiset_of<std::string>> buffer_hash;
+      for (auto &it : files){
+        if (it.right > pos){
+          read_file(it.left, pos, buffer_hash, block_size, hash_default);
+          check = true;
         }
-        file.seekg(pos);
-        std::string buf;
-        buf.resize(block_size, '\0');
-        if (!file.read(&buf[0], block_size))
-        {
-          file.close();
-          std::cout << "duplicates = " << in_files.size() << std::endl;
-          return EXIT_SUCCESS;
-        }
-        buffer_hash.insert({it.left, GetHash(buf, hash_default)});
-        
-        file.close();
       }
-      auto i = in_files.begin();
+      auto i = files.begin();
       for (auto &it : buffer_hash){
         if (buffer_hash.right.count(it.right) < 2)
-          in_files.erase(i);
+          files.erase(i);
         else
           i++;
       }
-      if (in_files.size() < 2){
-        std::cout << "no duplicates = " << in_files.size() << std::endl;
-        check = false;
-      }
+      if (files.size() < 2)
+        return EXIT_SUCCESS;
       pos += block_size;
-    }
 
-    
+    } while(check);
+
+    size_t sz = files.begin()->right;
+    for(auto &it : files){
+      if (sz != it.right){
+        std::cout << std::endl;
+        sz = it.right;
+      }
+      std::cout << fs::system_complete(it.left) << std::endl;
+    }
+        
     return EXIT_SUCCESS;
   }
   catch ( std::exception &e )
