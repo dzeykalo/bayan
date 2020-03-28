@@ -4,11 +4,12 @@ compiler: clang
 addons:
   apt:
     sources:
-    - mhier/libboost-latest
     - ubuntu-toolchain-r-test
+    - libboost-latest
     packages:
     - g++-7
-    - libboost1.65-all-dev
+    - libboost-serialization-dev
+    - libboost-dev
 script:
 - cmake .
 - cmake --build .
