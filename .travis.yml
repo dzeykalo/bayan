@@ -5,15 +5,14 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - sourceline: 'ppa:mhier/libboost-latest'
     packages:
     - g++-7
-matrix:
-  include:
-    - env: COMPILER=g++-7 BUILD=Debug STANDARD=14 compiler: gcc
-    addons: 
-      packages:
-        - boost1.65
+before_install:
+  - wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+  - tar xzvf boost_1_65_1.tar.gz
+  - cd boost_1_65_1/
+  - sudo ./bootstrap.sh --with-libraries=all
+  - sudo ./b2 install
 script:
 - cmake .
 - cmake --build .
