@@ -7,12 +7,7 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - g++-7
-before_install:
-  - wget https://netcologne.dl.sourceforge.net/project/boost/boost/1.65.1/boost_1_65_1.tar.gz
-  - tar xzvf boost_1_65_1.tar.gz
-  - cd boost_1_65_1/
-  - sudo ./bootstrap.sh --with-libraries=all
-  - sudo ./b2 install
+    - libboost-all-dev
 script:
 - cmake .
 - cmake --build .

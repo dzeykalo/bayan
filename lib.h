@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/crc.hpp>
 #include <boost/uuid/sha1.hpp>
 #include <boost/fusion/algorithm.hpp>
@@ -40,7 +41,7 @@ std::string GetHash(const std::string& block, bool hash_default) {
 }
 void read_file(fs::path fname, size_t &pos, boost::bimap<fs::path, bm::multiset_of<std::string>> &buffer_hash, size_t &block_size, bool hash_default)
 {
-  fs::ifstream file;
+  fs::fstream file;
   file.rdbuf()->pubsetbuf(nullptr, 0);
   file.open(fname, std::ios::binary);
   if (!file.is_open())
