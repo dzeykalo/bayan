@@ -9,7 +9,7 @@ project(bayan VERSION 0.0.${PRO_PATCH})
 
 find_package(Boost COMPONENTS unit_test_framework filesystem program_options REQUIRED)
 
-add_executable(bayan main.cpp)
+add_executable(bayan main.cpp lib.h)
 
 set_target_properties(
         bayan PROPERTIES

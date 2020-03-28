@@ -1,0 +1,19 @@
+dist: xenial
+language: cpp
+compiler: clang
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-7
+    - libboost-all-dev
+script:
+- cmake .
+- cmake --build .
+- cmake --build . --target package
+deploy:
+  provider: script
+  skip_cleanup: true
+  script:
+  - curl -f -T bayan-0.0.${TRAVIS_BUILD_NUMBER}-Linux.deb -udzeykalo:${BINTRAY_API_KEY} "https://api.bintray.com/content/dzeykalo/otus-cpp/homework/${TRAVIS_BUILD_NUMBER}/bayan-0.0.${TRAVIS_BUILD_NUMBER}-Linux.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64;publish=1"
