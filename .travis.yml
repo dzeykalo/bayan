@@ -8,7 +8,7 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - g++-7
-    - boost1.65
+    - boost1.65-all-dev
 script:
 - cmake .
 - cmake --build .
