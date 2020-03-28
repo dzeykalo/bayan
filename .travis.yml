@@ -8,8 +8,12 @@ addons:
     - sourceline: 'ppa:mhier/libboost-latest'
     packages:
     - g++-7
-before_install:
-  - sudo apt-get install libboost1.65-all-dev
+matrix:
+  include:
+    - env: COMPILER=g++-7 BUILD=Debug STANDARD=14 compiler: gcc
+    addons: 
+      packages:
+        - boost1.65
 script:
 - cmake .
 - cmake --build .
