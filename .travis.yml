@@ -8,7 +8,8 @@ addons:
     - sourceline: 'ppa:mhier/libboost-latest'
     packages:
     - g++-7
-    - libboost1.65-all-dev
+before_install:
+  - sudo apt-get install libboost1.65-all-dev
 script:
 - cmake .
 - cmake --build .
