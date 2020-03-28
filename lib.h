@@ -11,9 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace po = boost::program_options;
 namespace fs = boost::filesystem;
-namespace fn = boost::fusion;
 namespace bm = boost::bimaps;
 
 std::string GetCrc32(const std::string& block) {

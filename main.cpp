@@ -1,5 +1,10 @@
 #include "lib.h"
 
+namespace po = boost::program_options;
+namespace fn = boost::fusion;
+namespace fs = boost::filesystem;
+namespace bm = boost::bimaps;
+
 int main(int argc, const char* argv[])
 {
   po::options_description desc("options");
