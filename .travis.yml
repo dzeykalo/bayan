@@ -5,11 +5,10 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - libboost-latest
+    - sourceline: 'ppa:mhier/libboost-latest'
     packages:
     - g++-7
-    - libboost-serialization-dev
-    - libboost-dev
+    - libboost1.65-all-dev
 script:
 - cmake .
 - cmake --build .
