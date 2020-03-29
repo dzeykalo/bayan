@@ -1,10 +1,5 @@
 #include "lib.h"
 
-namespace po = boost::program_options;
-namespace fn = boost::fusion;
-namespace fs = boost::filesystem;
-namespace bm = boost::bimaps;
-
 int main(int argc, const char* argv[])
 {
   po::options_description desc("options");
@@ -43,7 +38,7 @@ int main(int argc, const char* argv[])
       if (hash_logic == "sha1" || hash_logic == "SHA1")
         hash_default = false;
     }
-
+    
     if (vm.count("input"))
     {
       auto input_files = vm["input"].as<std::vector<std::string>>();
@@ -58,7 +53,7 @@ int main(int argc, const char* argv[])
             files.insert({x, fs::file_size(x)});
         }
         else
-          throw it + " exists, but is not a regular file or directory";
+          throw std::runtime_error(it + " exists, but is not a regular file or directory");
       }
 
       for (auto &it : files){
@@ -71,7 +66,7 @@ int main(int argc, const char* argv[])
 
     bool check = false;
     size_t pos = 0;
-
+    
     do {
       check = false;
       boost::bimap<fs::path, bm::multiset_of<std::string>> buffer_hash;
@@ -85,8 +80,7 @@ int main(int argc, const char* argv[])
       for (auto &it : buffer_hash){
         if (buffer_hash.right.count(it.right) < 2)
           files.erase(i);
-        else
-          i++;
+        i++;
       }
       if (files.size() < 2)
         return EXIT_SUCCESS;

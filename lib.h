@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace bm = boost::bimaps;
 
@@ -43,14 +44,13 @@ void read_file(fs::path fname, size_t &pos, boost::bimap<fs::path, bm::multiset_
 {
   fs::fstream file;
   file.rdbuf()->pubsetbuf(nullptr, 0);
-  file.open(fname, std::ios::binary);
+  file.open(fname);
   if (!file.is_open())
-    throw "error open " + fname.string();
-
+    throw std::runtime_error("error open " + fname.string());
   file.seekg(pos);
   std::string buf;
   buf.resize(block_size, '\0');
-  !file.read(&buf[0], block_size);
+  file.read(&buf[0], block_size);
   buffer_hash.insert({fname, GetHash(buf, hash_default)});
   
   file.close();
