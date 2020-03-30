@@ -8,7 +8,7 @@ int main(int argc, const char* argv[])
   const size_t max_block_size = 100;
   size_t block_size;
   bool hash_default = true;
-  boost::bimap<fs::path, boost::bimaps::multiset_of<size_t>> files;
+  boost::bimap<fs::path, boost::bimaps::multiset_of<std::string>> files;
 
   desc.add_options()
           ("help,h", "show help")
@@ -44,17 +44,7 @@ int main(int argc, const char* argv[])
       auto input_files = vm["input"].as<std::vector<std::string>>();
       
       for(auto &it : input_files)
-      {
-        if (fs::is_regular_file(it))
-          files.insert({it, fs::file_size(it)});
-        else if (fs::is_directory(it))
-        {
-          for (auto &x : fs::directory_iterator(it))
-            files.insert({x, fs::file_size(x)});
-        }
-        else
-          throw std::runtime_error(it + " exists, but is not a regular file or directory");
-      }
+        GetPath(it, files);
 
       for (auto &it : files){
         if (files.right.count(it.right) < 2)
@@ -69,18 +59,17 @@ int main(int argc, const char* argv[])
     
     do {
       check = false;
-      boost::bimap<fs::path, bm::multiset_of<std::string>> buffer_hash;
-      for (auto &it : files){
-        if (it.right > pos){
-          read_file(it.left, pos, buffer_hash, block_size, hash_default);
+      for (auto it = files.left.begin(); it != files.left.end(); it++){
+        if (fs::file_size(it->first) > pos){
+          std::string hash;
+          read_file(it->first, pos, hash, block_size, hash_default);
+          files.left.modify_data(it, boost::bimaps::_data = it->second + hash);
           check = true;
         }
       }
-      auto i = files.begin();
-      for (auto &it : buffer_hash){
-        if (buffer_hash.right.count(it.right) < 2)
-          files.erase(i);
-        i++;
+      for (auto &it : files){
+        if (files.right.count(it.right) < 2)
+          files.erase(it);
       }
       if (files.size() < 2)
         return EXIT_SUCCESS;
@@ -88,13 +77,17 @@ int main(int argc, const char* argv[])
 
     } while(check);
 
-    size_t sz = files.begin()->right;
+    std::cout << std::endl;
+    std::vector<std::string> v;
     for(auto &it : files){
-      if (sz != it.right){
+      auto result = boost::find(v, it.right);
+      if (result == v.end()){
+        auto p = files.right.equal_range(it.right);
+        for (auto &i = p.first; i != p.second; i++)
+          std::cout << fs::system_complete(i->second) << std::endl;
         std::cout << std::endl;
-        sz = it.right;
-      }
-      std::cout << fs::system_complete(it.left) << std::endl;
+        v.push_back(it.right);
+      }      
     }
         
     return EXIT_SUCCESS;

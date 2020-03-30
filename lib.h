@@ -8,6 +8,7 @@
 #include <boost/bimap.hpp>
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/bimap/support/lambda.hpp>
+#include <boost/range/algorithm/find.hpp>
 #include <iomanip>
 #include <string>
 #include <vector>
@@ -40,7 +41,19 @@ std::string GetHash(const std::string& block, bool hash_default) {
   else
     return GetSha1(block);
 }
-void read_file(fs::path fname, size_t &pos, boost::bimap<fs::path, bm::multiset_of<std::string>> &buffer_hash, size_t &block_size, bool hash_default)
+void GetPath(fs::path p, boost::bimap<fs::path, boost::bimaps::multiset_of<std::string>> &files)
+{
+  if (fs::is_regular_file(p))
+    files.insert({p, std::to_string(fs::file_size(p))});
+  else if (fs::is_directory(p))
+  {
+    for (auto x : fs::directory_iterator(p))
+      GetPath(x, files);
+  }
+  else
+    throw std::runtime_error(p.string() + " exists, but is not a regular file or directory");
+}
+void read_file(fs::path fname, size_t &pos, std::string &hash, size_t &block_size, bool hash_default)
 {
   fs::fstream file;
   file.rdbuf()->pubsetbuf(nullptr, 0);
@@ -51,7 +64,6 @@ void read_file(fs::path fname, size_t &pos, boost::bimap<fs::path, bm::multiset_
   std::string buf;
   buf.resize(block_size, '\0');
   file.read(&buf[0], block_size);
-  buffer_hash.insert({fname, GetHash(buf, hash_default)});
-  
+  hash = GetHash(buf, hash_default);
   file.close();
 }
